@@ -112,7 +112,7 @@ def database_view():
     # Создаем вклады
     cursor.execute('''CREATE VIEW IF NOT EXISTS deposits_v AS
                       SELECT investors.deposit_id, investors.investor_name, investors.deposit_in, investors.deposit_out,
-                      currency.currency_name
+                      investors.deposit_returned, currency.currency_name
                       FROM investors
                       INNER JOIN currency ON investors.currency_id = currency.currency_id''')
 
@@ -121,7 +121,25 @@ def database_view():
 
 def database_position_filter(position):
     connection, cursor = connect('bank.db')
-    cursor.execute("CREATE VIEW some_positions AS SELECT * FROM human_res_dept WHERE position = " + position)
+    cursor.execute("CREATE VIEW IF NOT EXISTS some_positions AS SELECT * FROM human_res_dept WHERE position = " + position)
+    save(connection)
+
+
+def database_currency_filter(currency):
+    connection, cursor = connect('bank.db')
+    cursor.execute("CREATE VIEW IF NOT EXISTS some_currency AS SELECT * FROM deposits_v WHERE currency_name = " + currency)
+    save(connection)
+
+
+def database_deposit_return_filter(is_returned):
+    connection, cursor = connect('bank.db')
+    cursor.execute("CREATE VIEW IF NOT EXISTS returned_deposits AS SELECT * FROM deposits_v WHERE deposit_returned = " + is_returned)
+    save(connection)
+
+
+def database_exact_deposit_filter(deposit_value):
+    connection, cursor = connect('bank.db')
+    cursor.execute("CREATE VIEW IF NOT EXISTS exact_deposit AS SELECT * FROM deposits_v WHERE deposit_in = " + deposit_value)
     save(connection)
 
 
@@ -130,7 +148,10 @@ def main():
     database_create()
     database_fill()
     database_view()
-    database_position_filter("\"owner\"")
+    database_position_filter('"owner"')
+    database_currency_filter('"GBP"')
+    database_deposit_return_filter("1")
+    database_exact_deposit_filter("7500")
 
 
 if __name__ == '__main__':
